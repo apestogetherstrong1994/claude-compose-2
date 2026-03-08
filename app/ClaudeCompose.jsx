@@ -58,6 +58,7 @@ export default function ClaudeCompose() {
     rejectSuggestion,
     sendChatMessage,
     setBrainstormIdeas,
+    resetAIState,
   } = useAIAction({ paragraphs, voiceProfile: null, projectConfig, ghostLength });
 
   // ─── Document analysis (outline + story elements) ─────────────────
@@ -65,6 +66,7 @@ export default function ClaudeCompose() {
     outline,
     storyElements,
     isAnalyzing: isAnalyzingDocument,
+    resetAnalysis,
   } = useDocumentAnalysis({
     paragraphs,
     writingType: projectConfig?.writingType,
@@ -106,11 +108,16 @@ export default function ClaudeCompose() {
     setPhase("welcome");
     setStartData(null);
     setProjectConfig(null);
+    setSidebarOpen(true);
+    setChatOpen(false);
+    setIsAnalyzingVoice(false);
+    setGhostLength("sentence");
     resetDocument();
-    clearGhostText();
+    resetAIState();
+    resetAnalysis();
     voiceAnalyzedRef.current = false;
     openingTriggeredRef.current = false;
-  }, [resetDocument, clearGhostText]);
+  }, [resetDocument, resetAIState, resetAnalysis]);
 
   // ─── Voice analysis trigger ───────────────────────────────────────
   useEffect(() => {

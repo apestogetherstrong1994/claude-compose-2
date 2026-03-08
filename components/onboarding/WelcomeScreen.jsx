@@ -117,7 +117,22 @@ export function WelcomeScreen({ onStart }) {
         animation: "fadeIn 0.4s ease",
       }}>
         {/* Logo & headline */}
-        <ClaudeLogo size={48} />
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+        }}>
+          <ClaudeLogo size={36} />
+          <span style={{
+            fontFamily: C.sans,
+            fontSize: 18,
+            fontWeight: 600,
+            color: C.text,
+            letterSpacing: "-0.01em",
+          }}>
+            ClaudeCompose
+          </span>
+        </div>
         <h1 style={{
           fontFamily: C.serif,
           fontWeight: 300,
