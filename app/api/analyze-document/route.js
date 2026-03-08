@@ -112,6 +112,6 @@ Return ONLY the JSON object.`,
     return Response.json({ outline, elements });
   } catch (error) {
     console.error("Analyze document error:", error);
-    return Response.json({ outline: [], elements: null }, { status: 200 });
+    return Response.json({ error: error.message || "Analysis failed" }, { status: 500 });
   }
 }
