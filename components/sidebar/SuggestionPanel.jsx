@@ -6,6 +6,7 @@ import { Sparkles, Lightbulb, Fingerprint, ChevronLeft, ChevronRight } from "luc
 import { SuggestionCard } from "./SuggestionCard";
 import { BrainstormPanel } from "./BrainstormPanel";
 import { VoicePanel } from "./VoicePanel";
+import { parseStreamingSuggestion } from "@/lib/parsers";
 
 const TABS = [
   { id: "suggestions", label: "Suggestions", icon: Sparkles },
@@ -146,6 +147,35 @@ export function SuggestionPanel({
                     Select text in your document and use the toolbar to get AI suggestions
                   </div>
                 )}
+                {/* Show streaming preview while generating */}
+                {isStreaming && streamingText && (() => {
+                  const partial = parseStreamingSuggestion(streamingText);
+                  return partial ? (
+                    <SuggestionCard
+                      key="streaming"
+                      suggestion={partial}
+                      isStreaming={true}
+                    />
+                  ) : (
+                    <div style={{
+                      padding: 16,
+                      textAlign: "center",
+                      color: C.textMuted,
+                      fontSize: 13,
+                      fontFamily: C.sans,
+                    }}>
+                      <div style={{
+                        width: 20, height: 20,
+                        border: `2px solid ${C.accent}`,
+                        borderTopColor: "transparent",
+                        borderRadius: "50%",
+                        animation: "spin 0.8s linear infinite",
+                        margin: "0 auto 8px",
+                      }} />
+                      Composing...
+                    </div>
+                  );
+                })()}
                 {suggestions.map(s => (
                   <SuggestionCard
                     key={s.id}

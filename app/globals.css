@@ -90,6 +90,10 @@ body {
   to { opacity: 0.4; }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ContentEditable paragraphs */
 [contenteditable]:focus {
   outline: none;
