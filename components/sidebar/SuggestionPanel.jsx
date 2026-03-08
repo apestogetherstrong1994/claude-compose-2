@@ -181,91 +181,96 @@ export function SuggestionPanel({
             </div>
           </div>
 
-          {/* Document outline & story elements */}
-          <DocumentOutline
-            outline={outline}
-            storyElements={storyElements}
-            isAnalyzing={isAnalyzingDocument}
-          />
-
-          {/* Tab content */}
+          {/* Scrollable area: outline + tab content */}
           <div style={{
             flex: 1,
             overflowY: "auto",
-            padding: "12px 0",
+            minHeight: 0,
           }}>
-            {activeTab === "suggestions" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {suggestions.length === 0 && !isStreaming && (
-                  <div style={{
-                    padding: 20,
-                    textAlign: "center",
-                    color: C.textMuted,
-                    fontSize: 13,
-                    fontFamily: C.sans,
-                    lineHeight: 1.6,
-                  }}>
-                    <Sparkles size={20} style={{ opacity: 0.4, margin: "0 auto 8px", display: "block" }} />
-                    Select text in your document and use the toolbar to get AI suggestions
-                  </div>
-                )}
-                {/* Show streaming preview while generating */}
-                {isStreaming && streamingText && (() => {
-                  const partial = parseStreamingSuggestion(streamingText);
-                  return partial ? (
-                    <SuggestionCard
-                      key="streaming"
-                      suggestion={partial}
-                      isStreaming={true}
-                    />
-                  ) : (
+            {/* Document outline & story elements */}
+            <DocumentOutline
+              outline={outline}
+              storyElements={storyElements}
+              isAnalyzing={isAnalyzingDocument}
+            />
+
+            {/* Tab content */}
+            <div style={{
+              padding: "12px 0",
+            }}>
+              {activeTab === "suggestions" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {suggestions.length === 0 && !isStreaming && (
                     <div style={{
-                      padding: 16,
+                      padding: 20,
                       textAlign: "center",
                       color: C.textMuted,
                       fontSize: 13,
                       fontFamily: C.sans,
+                      lineHeight: 1.6,
                     }}>
-                      <div style={{
-                        width: 20, height: 20,
-                        border: `2px solid ${C.accent}`,
-                        borderTopColor: "transparent",
-                        borderRadius: "50%",
-                        animation: "spin 0.8s linear infinite",
-                        margin: "0 auto 8px",
-                      }} />
-                      Composing...
+                      <Sparkles size={20} style={{ opacity: 0.4, margin: "0 auto 8px", display: "block" }} />
+                      Select text in your document and use the toolbar to get AI suggestions
                     </div>
-                  );
-                })()}
-                {suggestions.map(s => (
-                  <SuggestionCard
-                    key={s.id}
-                    suggestion={s}
-                    onAccept={() => onAcceptSuggestion(s)}
-                    onReject={() => onRejectSuggestion(s.id)}
-                    onEdit={(text) => onEditSuggestion(s, text)}
-                    isStreaming={false}
-                  />
-                ))}
-              </div>
-            )}
+                  )}
+                  {/* Show streaming preview while generating */}
+                  {isStreaming && streamingText && (() => {
+                    const partial = parseStreamingSuggestion(streamingText);
+                    return partial ? (
+                      <SuggestionCard
+                        key="streaming"
+                        suggestion={partial}
+                        isStreaming={true}
+                      />
+                    ) : (
+                      <div style={{
+                        padding: 16,
+                        textAlign: "center",
+                        color: C.textMuted,
+                        fontSize: 13,
+                        fontFamily: C.sans,
+                      }}>
+                        <div style={{
+                          width: 20, height: 20,
+                          border: `2px solid ${C.accent}`,
+                          borderTopColor: "transparent",
+                          borderRadius: "50%",
+                          animation: "spin 0.8s linear infinite",
+                          margin: "0 auto 8px",
+                        }} />
+                        Composing...
+                      </div>
+                    );
+                  })()}
+                  {suggestions.map(s => (
+                    <SuggestionCard
+                      key={s.id}
+                      suggestion={s}
+                      onAccept={() => onAcceptSuggestion(s)}
+                      onReject={() => onRejectSuggestion(s.id)}
+                      onEdit={(text) => onEditSuggestion(s, text)}
+                      isStreaming={false}
+                    />
+                  ))}
+                </div>
+              )}
 
-            {activeTab === "brainstorm" && (
-              <BrainstormPanel
-                ideas={brainstormIdeas}
-                isStreaming={isStreaming}
-                onBrainstorm={onBrainstorm}
-                onInsertIdea={onInsertIdea}
-              />
-            )}
+              {activeTab === "brainstorm" && (
+                <BrainstormPanel
+                  ideas={brainstormIdeas}
+                  isStreaming={isStreaming}
+                  onBrainstorm={onBrainstorm}
+                  onInsertIdea={onInsertIdea}
+                />
+              )}
 
-            {activeTab === "voice" && (
-              <VoicePanel
-                voiceProfile={voiceProfile}
-                isAnalyzing={isAnalyzingVoice}
-              />
-            )}
+              {activeTab === "voice" && (
+                <VoicePanel
+                  voiceProfile={voiceProfile}
+                  isAnalyzing={isAnalyzingVoice}
+                />
+              )}
+            </div>
           </div>
         </div>
       )}
