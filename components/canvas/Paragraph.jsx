@@ -27,11 +27,23 @@ export function Paragraph({
 }) {
   const ref = useRef(null);
   const lastTextRef = useRef(paragraph.text);
+  const mountedRef = useRef(false);
 
-  // Sync text from state only when paragraph changes externally
+  // Set initial text on mount (once only — never let React manage contentEditable children)
   useEffect(() => {
+    if (ref.current && !mountedRef.current) {
+      mountedRef.current = true;
+      if (paragraph.text) {
+        ref.current.innerText = paragraph.text;
+      }
+    }
+  }, []);
+
+  // Sync text from state only when paragraph changes EXTERNALLY
+  // (e.g. accepting a suggestion, merging paragraphs)
+  useEffect(() => {
+    if (!mountedRef.current) return;
     if (ref.current && paragraph.text !== lastTextRef.current) {
-      // Only update innerHTML if text actually changed externally
       const currentText = ref.current.innerText;
       if (currentText !== paragraph.text) {
         ref.current.innerText = paragraph.text;
@@ -96,9 +108,7 @@ export function Paragraph({
           transition: "border-color 0.2s ease",
           position: "relative",
         }}
-      >
-        {paragraph.text}
-      </div>
+      />
 
       {/* Ghost text (tab-to-continue) */}
       {ghostText && isActive && (
