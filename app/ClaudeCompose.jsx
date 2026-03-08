@@ -189,35 +189,60 @@ export default function ClaudeCompose() {
     let focusId = ghostParagraphId;
 
     if (para) {
+      // Strip markdown headers and echoed text
+      let cleanGhost = ghostText.replace(/^#[^\n]*\n+/, "");
+
       if (!para.text) {
         // Opening case: empty paragraph — replace it with the ghost text
-        // Strip any markdown headers the model may have prepended
-        const openingText = ghostText.trim().replace(/^#[^\n]*\n+/, "");
-        replaceParagraph(ghostParagraphId, openingText, "claude");
-        // Add a new empty paragraph after so the user can keep writing
-        focusId = addParagraph(ghostParagraphId, "", "human");
-      } else {
-        // Normal case: append ghost text to the current paragraph
-        let cleanGhost = ghostText.trim().replace(/^#[^\n]*\n+/, "");
-        // Strip any repeated paragraph text the model may have echoed back
-        const trimmedPara = para.text.trimEnd();
-        if (cleanGhost.startsWith(trimmedPara)) {
-          cleanGhost = cleanGhost.slice(trimmedPara.length).trimStart();
-        }
-        const parts = cleanGhost.split(/\n\n+/);
-
-        // Append first part to current paragraph
-        const needsSpace = para.text.length > 0 && !para.text.endsWith(" ")
-          && parts[0].length > 0 && !parts[0].startsWith(" ");
-        const appendedText = para.text + (needsSpace ? " " : "") + parts[0];
-        replaceParagraph(ghostParagraphId, appendedText, "collaborative");
-
-        // If passage-length ghost with multiple paragraphs, add the rest as new paragraphs
+        // Check if the opening itself contains paragraph breaks
+        const parts = cleanGhost.trim().split(/\n\n+/);
+        replaceParagraph(ghostParagraphId, parts[0].trim(), "claude");
         let lastId = ghostParagraphId;
         for (let i = 1; i < parts.length; i++) {
           lastId = addParagraph(lastId, parts[i].trim(), "claude");
         }
         focusId = lastId;
+      } else {
+        cleanGhost = cleanGhost.trim();
+
+        // Strip any repeated paragraph text the model may have echoed back
+        const trimmedPara = para.text.trimEnd();
+        if (cleanGhost.startsWith(trimmedPara)) {
+          cleanGhost = cleanGhost.slice(trimmedPara.length).trimStart();
+        }
+
+        // Determine if the current paragraph is "complete" and ghost should start a new paragraph
+        const sentenceCount = (para.text.match(/[.!?]["']?\s/g) || []).length + (para.text.match(/[.!?]["']?$/) ? 1 : 0);
+        const wordCount = para.text.split(/\s+/).filter(Boolean).length;
+        const paragraphComplete = para.text.length > 0 && (sentenceCount >= 3 || wordCount >= 60);
+
+        const parts = cleanGhost.split(/\n\n+/);
+
+        if (paragraphComplete) {
+          // Paragraph is complete — add ghost text as new paragraph(s)
+          let lastId = ghostParagraphId;
+          for (const part of parts) {
+            if (part.trim()) {
+              lastId = addParagraph(lastId, part.trim(), "claude");
+            }
+          }
+          focusId = lastId;
+        } else {
+          // Paragraph is mid-thought — append first part inline
+          const needsSpace = para.text.length > 0 && !para.text.endsWith(" ")
+            && parts[0].length > 0 && !parts[0].startsWith(" ");
+          const appendedText = para.text + (needsSpace ? " " : "") + parts[0];
+          replaceParagraph(ghostParagraphId, appendedText, "collaborative");
+
+          // Any remaining parts become new paragraphs
+          let lastId = ghostParagraphId;
+          for (let i = 1; i < parts.length; i++) {
+            if (parts[i].trim()) {
+              lastId = addParagraph(lastId, parts[i].trim(), "claude");
+            }
+          }
+          focusId = lastId;
+        }
       }
     }
     clearGhostText();

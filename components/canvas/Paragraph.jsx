@@ -62,11 +62,11 @@ export function Paragraph({
     if (!ref.current) return;
 
     if (ghostText && isActive) {
-      // Strip any repeated paragraph text the model may have echoed back
       const paraText = paragraph.text || "";
       let displayGhost = ghostText;
       // Strip markdown headers (e.g. "# Opening Paragraph\n\n")
       displayGhost = displayGhost.replace(/^#[^\n]*\n+/, "");
+      // Strip any repeated paragraph text the model may have echoed back
       if (paraText.length > 0) {
         const trimmedPara = paraText.trimEnd();
         const trimmedGhost = displayGhost.trimStart();
@@ -75,9 +75,25 @@ export function Paragraph({
         }
       }
 
-      const needsSpace = paraText.length > 0 && !paraText.endsWith(" ") && !paraText.endsWith("\n")
-        && displayGhost.length > 0 && !displayGhost.startsWith(" ");
-      const finalText = (needsSpace ? " " : "") + displayGhost;
+      // Determine if current paragraph looks "complete" (enough sentences/words)
+      // and ghost text should visually start a new paragraph
+      const sentenceCount = (paraText.match(/[.!?]["']?\s/g) || []).length + (paraText.match(/[.!?]["']?$/) ? 1 : 0);
+      const wordCount = paraText.split(/\s+/).filter(Boolean).length;
+      const paragraphComplete = paraText.length > 0 && (sentenceCount >= 3 || wordCount >= 60);
+      // Also respect any leading \n the model may have output
+      const modelWantsBreak = /^\s*\n/.test(displayGhost);
+      const startsNewPara = paragraphComplete || modelWantsBreak;
+
+      let finalText;
+      if (startsNewPara) {
+        // Show ghost on a new visual line with a paragraph gap
+        finalText = "\n\n" + displayGhost.trimStart();
+      } else {
+        const needsSpace = paraText.length > 0
+          && !paraText.endsWith(" ") && !paraText.endsWith("\n")
+          && displayGhost.length > 0 && !displayGhost.startsWith(" ");
+        finalText = (needsSpace ? " " : "") + displayGhost;
+      }
 
       // Reuse existing ghost span if it's still in the DOM, otherwise create one
       let ghostSpan = ghostSpanRef.current;
