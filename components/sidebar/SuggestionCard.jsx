@@ -11,6 +11,7 @@ const typeBadgeColor = {
   tone: C.purple,
   describe: C.yellow,
   revision: C.accent,
+  draft: C.blue,
   brainstorm: C.yellow,
 };
 

@@ -17,6 +17,7 @@ const TOKEN_LIMITS = {
   continue_paragraph: 1024,
   continue_passage: 2048,
   opening: 1024,
+  draft: 2048,
   brainstorm: 2048,
   analyze_voice: 1024,
   chat: 4096,
@@ -154,6 +155,8 @@ function buildActionMessage(toolType, toolParams) {
     }
     case "opening":
       return `Please write an opening paragraph for this piece: "${toolParams?.description}"`;
+    case "draft":
+      return `Please turn this brainstorm idea into actual prose for my document: "${toolParams?.idea}"`;
     case "brainstorm":
       return toolParams?.prompt || "Help me brainstorm ideas.";
     case "analyze_voice":

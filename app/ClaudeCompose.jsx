@@ -296,14 +296,10 @@ export default function ClaudeCompose() {
   }, [dispatchAction, setBrainstormIdeas]);
 
   const handleInsertIdea = useCallback((idea) => {
-    addSuggestion({
-      type: "brainstorm",
-      text: idea,
-      target: "_new",
-      originalText: "",
-      reasoning: "From brainstorm",
-    });
-  }, [addSuggestion]);
+    // Dispatch a "draft" AI action that converts the brainstorm idea
+    // into actual prose, which will appear as a suggestion card
+    dispatchAction("draft", { idea });
+  }, [dispatchAction]);
 
   // ─── Render phases ────────────────────────────────────────────────
   if (phase === "welcome") {
