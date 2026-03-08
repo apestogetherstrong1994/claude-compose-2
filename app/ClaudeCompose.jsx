@@ -337,6 +337,7 @@ export default function ClaudeCompose() {
           outline={outline}
           storyElements={storyElements}
           isAnalyzingDocument={isAnalyzingDocument}
+          writingType={projectConfig?.writingType}
         />
       </div>
 

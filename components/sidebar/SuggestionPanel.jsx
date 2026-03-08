@@ -40,6 +40,7 @@ export function SuggestionPanel({
   outline,
   storyElements,
   isAnalyzingDocument,
+  writingType,
 }) {
   const [activeTab, setActiveTab] = useState("suggestions");
 
@@ -269,6 +270,7 @@ export function SuggestionPanel({
                   isStreaming={isStreaming}
                   onBrainstorm={onBrainstorm}
                   onInsertIdea={onInsertIdea}
+                  writingType={writingType}
                 />
               )}
 

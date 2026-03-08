@@ -5,15 +5,50 @@ import { C } from "@/lib/design-system";
 import { Lightbulb, Send, Copy, ArrowRight } from "lucide-react";
 import { StreamingDots } from "@/components/chat/StreamingDots";
 
-const QUICK_PROMPTS = [
-  "Alternative openings for this piece",
-  "Counterarguments to address",
-  "Stronger ways to end this",
-  "Metaphors or analogies I could use",
-  "What's missing from my argument?",
-];
+const QUICK_PROMPTS_BY_GENRE = {
+  Fiction: [
+    "Plot twists I could use here",
+    "Ways to deepen this character",
+    "Stronger ways to end this scene",
+  ],
+  Poetry: [
+    "Images or metaphors to explore",
+    "Alternative structures for this poem",
+    "Surprising turns this could take",
+  ],
+  Essay: [
+    "Counterarguments to address",
+    "Stronger ways to open this",
+    "What's missing from my argument?",
+  ],
+  "Cover Letter": [
+    "Stronger ways to show impact",
+    "How to make my opening stand out",
+    "Skills I should highlight more",
+  ],
+  "Blog Post": [
+    "Hooks to grab the reader",
+    "Angles I haven't considered",
+    "Ways to make this more actionable",
+  ],
+  Email: [
+    "Ways to make this more concise",
+    "Stronger subject line ideas",
+    "How to make my ask clearer",
+  ],
+  "Non-fiction": [
+    "Examples or evidence to include",
+    "Structural alternatives for this piece",
+    "What's missing from my argument?",
+  ],
+  Other: [
+    "Alternative directions for this piece",
+    "Ways to strengthen my opening",
+    "What could make this more compelling?",
+  ],
+};
 
-export function BrainstormPanel({ ideas, isStreaming, onBrainstorm, onInsertIdea }) {
+export function BrainstormPanel({ ideas, isStreaming, onBrainstorm, onInsertIdea, writingType }) {
   const [prompt, setPrompt] = useState("");
 
   const handleSubmit = (text) => {
@@ -36,7 +71,7 @@ export function BrainstormPanel({ ideas, isStreaming, onBrainstorm, onInsertIdea
         flexWrap: "wrap",
         gap: 6,
       }}>
-        {QUICK_PROMPTS.map((qp) => (
+        {(QUICK_PROMPTS_BY_GENRE[writingType] || QUICK_PROMPTS_BY_GENRE.Other).map((qp) => (
           <button
             key={qp}
             onClick={() => handleSubmit(qp)}
