@@ -173,6 +173,7 @@ export default function ClaudeCompose() {
     return (
       <ContextSetup
         description={startData?.description || ""}
+        text={startData?.text || ""}
         onComplete={handleContextComplete}
         onSkip={handleContextSkip}
       />

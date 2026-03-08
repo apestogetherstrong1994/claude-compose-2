@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { C } from "@/lib/design-system";
 import { ClaudeLogo } from "@/components/icons/ClaudeLogo";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 
 const WRITING_TYPES = [
   "Essay", "Fiction", "Cover Letter", "Blog Post", "Email", "Non-fiction", "Poetry", "Other",
@@ -21,16 +21,40 @@ function detectWritingType(description) {
   return null;
 }
 
-export function ContextSetup({ description, onComplete, onSkip }) {
+export function ContextSetup({ description, text, onComplete, onSkip }) {
   const [title, setTitle] = useState("");
   const [writingType, setWritingType] = useState(null);
   const [audience, setAudience] = useState("");
   const [contextNotes, setContextNotes] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const analyzedRef = useRef(false);
 
+  // Detect from description (fast, client-side)
   useEffect(() => {
     const detected = detectWritingType(description);
     if (detected) setWritingType(detected);
   }, [description]);
+
+  // If text was pasted/uploaded, use Claude to auto-detect genre, title, audience
+  useEffect(() => {
+    if (!text || text.trim().length < 30 || analyzedRef.current) return;
+    analyzedRef.current = true;
+
+    setIsAnalyzing(true);
+    fetch("/api/analyze-context", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.writingType) setWritingType(prev => prev || data.writingType);
+        if (data.title) setTitle(prev => prev || data.title);
+        if (data.audience) setAudience(prev => prev || data.audience);
+      })
+      .catch(() => {})
+      .finally(() => setIsAnalyzing(false));
+  }, [text]);
 
   const handleComplete = () => {
     onComplete({
@@ -74,6 +98,25 @@ export function ContextSetup({ description, onComplete, onSkip }) {
         }}>
           Help Claude understand your project. All fields are optional.
         </p>
+
+        {isAnalyzing && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 14px",
+            marginBottom: 16,
+            background: C.accentSoft,
+            borderRadius: C.radiusSm,
+            fontSize: 13,
+            fontFamily: C.sans,
+            color: C.accent,
+            animation: "fadeIn 0.2s ease",
+          }}>
+            <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+            Analyzing your writing to pre-fill fields...
+          </div>
+        )}
 
         {/* Writing type pills */}
         <label style={{

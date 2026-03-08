@@ -9,7 +9,7 @@ const CARDS = [
   {
     id: "paste",
     icon: FileText,
-    title: "Paste existing writing",
+    title: "Polish what you have",
     desc: "Bring a draft and build on it together",
   },
   {
@@ -272,6 +272,16 @@ export function WelcomeScreen({ onStart }) {
                   {uploadedFileName}
                 </span>
               )}
+
+              <span style={{
+                fontSize: 11,
+                fontFamily: C.sans,
+                color: C.textMuted,
+                opacity: 0.7,
+                marginLeft: uploadedFileName && !isUploading ? 0 : 4,
+              }}>
+                Uploading can take up to 60s for this web app prototype.
+              </span>
             </div>
 
             {uploadError && (
