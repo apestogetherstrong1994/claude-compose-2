@@ -14,6 +14,12 @@ const TABS = [
   { id: "voice", label: "Voice", icon: Fingerprint },
 ];
 
+const GHOST_LENGTHS = [
+  { id: "sentence", label: "Sentence", desc: "1-3 sentences" },
+  { id: "paragraph", label: "Paragraph", desc: "Full paragraph" },
+  { id: "passage", label: "Passage", desc: "Several paragraphs" },
+];
+
 export function SuggestionPanel({
   suggestions,
   isStreaming,
@@ -28,6 +34,8 @@ export function SuggestionPanel({
   isAnalyzingVoice,
   isOpen,
   onToggle,
+  ghostLength = "sentence",
+  onGhostLengthChange,
 }) {
   const [activeTab, setActiveTab] = useState("suggestions");
 
@@ -124,6 +132,49 @@ export function SuggestionPanel({
                 </button>
               );
             })}
+          </div>
+
+          {/* Ghost length setting */}
+          <div style={{
+            padding: "10px 0 8px 0",
+            borderBottom: `1px solid ${C.border}`,
+            flexShrink: 0,
+          }}>
+            <div style={{
+              fontSize: 11,
+              fontFamily: C.sans,
+              color: C.textMuted,
+              marginBottom: 6,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+            }}>
+              Auto-continue length
+            </div>
+            <div style={{ display: "flex", gap: 4 }}>
+              {GHOST_LENGTHS.map(gl => (
+                <button
+                  key={gl.id}
+                  onClick={() => onGhostLengthChange?.(gl.id)}
+                  title={gl.desc}
+                  style={{
+                    flex: 1,
+                    padding: "4px 6px",
+                    fontSize: 11,
+                    fontFamily: C.sans,
+                    fontWeight: ghostLength === gl.id ? 600 : 400,
+                    color: ghostLength === gl.id ? C.accent : C.textMuted,
+                    background: ghostLength === gl.id ? C.accentSoft : "transparent",
+                    border: `1px solid ${ghostLength === gl.id ? C.accent + "44" : C.border}`,
+                    borderRadius: 5,
+                    cursor: "pointer",
+                    transition: C.transitionFast,
+                  }}
+                >
+                  {gl.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Tab content */}

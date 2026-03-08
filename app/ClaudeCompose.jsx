@@ -19,6 +19,7 @@ export default function ClaudeCompose() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
   const [isAnalyzingVoice, setIsAnalyzingVoice] = useState(false);
+  const [ghostLength, setGhostLength] = useState("sentence"); // sentence | paragraph | passage
   const voiceAnalyzedRef = useRef(false);
 
   // ─── Document hook ────────────────────────────────────────────────
@@ -52,7 +53,7 @@ export default function ClaudeCompose() {
     rejectSuggestion,
     sendChatMessage,
     setBrainstormIdeas,
-  } = useAIAction({ paragraphs, voiceProfile: null, projectConfig });
+  } = useAIAction({ paragraphs, voiceProfile: null, projectConfig, ghostLength });
 
   // ─── Phase transitions ────────────────────────────────────────────
   const handleWelcomeStart = useCallback((data) => {
@@ -141,13 +142,15 @@ export default function ClaudeCompose() {
   }, [updateParagraph, fetchGhostText]);
 
   const handleAcceptGhost = useCallback(() => {
-    if (!ghostText || !ghostParagraphId) return;
+    if (!ghostText || !ghostParagraphId) return null;
     const para = paragraphs.find(p => p.id === ghostParagraphId);
+    let newId = null;
     if (para) {
       // Add ghost as new paragraph after the current one
-      addParagraph(ghostParagraphId, ghostText.trim(), "claude");
+      newId = addParagraph(ghostParagraphId, ghostText.trim(), "claude");
     }
     clearGhostText();
+    return newId;
   }, [ghostText, ghostParagraphId, paragraphs, addParagraph, clearGhostText]);
 
   // ─── Brainstorm ──────────────────────────────────────────────────
@@ -207,6 +210,7 @@ export default function ClaudeCompose() {
           onClearGhost={clearGhostText}
           authorStats={authorStats}
           wordCount={wordCount}
+          autoFocus
         />
 
         {/* Suggestion sidebar */}
@@ -224,6 +228,8 @@ export default function ClaudeCompose() {
           isAnalyzingVoice={isAnalyzingVoice}
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(prev => !prev)}
+          ghostLength={ghostLength}
+          onGhostLengthChange={setGhostLength}
         />
       </div>
 

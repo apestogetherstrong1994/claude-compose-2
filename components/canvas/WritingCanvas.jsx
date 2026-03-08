@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { C } from "@/lib/design-system";
 import { Paragraph } from "./Paragraph";
 import { FloatingToolbar } from "./FloatingToolbar";
@@ -22,9 +22,25 @@ export function WritingCanvas({
   onClearGhost,
   authorStats,
   wordCount,
+  autoFocus,
 }) {
   const canvasRef = useRef(null);
   const [activeParagraphId, setActiveParagraphId] = useState(null);
+  const autoFocused = useRef(false);
+
+  // Auto-focus first paragraph on mount
+  useEffect(() => {
+    if (autoFocus && !autoFocused.current && canvasRef.current) {
+      autoFocused.current = true;
+      requestAnimationFrame(() => {
+        const firstPara = canvasRef.current?.querySelector("[data-paragraph-id]");
+        if (firstPara) {
+          firstPara.focus();
+          placeCaretAtEnd(firstPara);
+        }
+      });
+    }
+  }, [autoFocus]);
   const { selectedText, selectionRect, paragraphId: selParagraphId, clearSelection } = useSelection(canvasRef);
 
   const handleToolAction = useCallback((action, params = {}) => {
@@ -190,7 +206,19 @@ export function WritingCanvas({
             onKeyDown={(e, el) => handleKeyDown(e, el, para.id)}
             onFocus={() => handleFocus(para.id)}
             onBlur={handleBlur}
-            onAcceptGhost={onAcceptGhost}
+            onAcceptGhost={() => {
+              const newId = onAcceptGhost?.();
+              if (newId) {
+                // Focus the newly created paragraph and place cursor at end
+                requestAnimationFrame(() => {
+                  const newEl = canvasRef.current?.querySelector(`[data-paragraph-id="${newId}"]`);
+                  if (newEl) {
+                    newEl.focus();
+                    placeCaretAtEnd(newEl);
+                  }
+                });
+              }
+            }}
           />
         ))}
       </div>

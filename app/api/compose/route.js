@@ -14,6 +14,8 @@ const TOKEN_LIMITS = {
   tone: 2048,
   describe: 2048,
   continue: 512,
+  continue_paragraph: 1024,
+  continue_passage: 2048,
   brainstorm: 2048,
   analyze_voice: 1024,
   chat: 4096,
@@ -53,7 +55,14 @@ export async function POST(request) {
       formattedMessages = [{ role: "user", content: "Hello" }];
     }
 
-    const maxTokens = TOKEN_LIMITS[toolType] || 4096;
+    // For continue, adjust token limit based on ghostLength
+    let tokenKey = toolType;
+    if (toolType === "continue" && toolParams?.ghostLength) {
+      const gl = toolParams.ghostLength;
+      if (gl === "paragraph") tokenKey = "continue_paragraph";
+      else if (gl === "passage") tokenKey = "continue_passage";
+    }
+    const maxTokens = TOKEN_LIMITS[tokenKey] || 4096;
 
     const stream = await client.messages.stream({
       model: "claude-sonnet-4-5-20250929",
@@ -131,8 +140,12 @@ function buildActionMessage(toolType, toolParams) {
       return `Please rewrite this text with a ${toolParams?.tone} tone: "${toolParams?.selectedText}"`;
     case "describe":
       return `Please enrich this text with more descriptive detail: "${toolParams?.selectedText}"`;
-    case "continue":
+    case "continue": {
+      const gl = toolParams?.ghostLength || "sentence";
+      if (gl === "passage") return `Please continue writing the next 2-3 paragraphs naturally.`;
+      if (gl === "paragraph") return `Please continue writing the next full paragraph naturally.`;
       return `Please continue writing the next 1-3 sentences naturally.`;
+    }
     case "brainstorm":
       return toolParams?.prompt || "Help me brainstorm ideas.";
     case "analyze_voice":
