@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { C } from "@/lib/design-system";
 import { ClaudeLogo } from "@/components/icons/ClaudeLogo";
-import { ArrowRight, FileText, Sparkles, Compass } from "lucide-react";
+import { ArrowRight, FileText, Sparkles, Compass, Upload, Loader2, File } from "lucide-react";
 
 const CARDS = [
   {
@@ -30,17 +30,25 @@ export function WelcomeScreen({ onStart }) {
   const [input, setInput] = useState("");
   const [pasteMode, setPasteMode] = useState(false);
   const [pastedText, setPastedText] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [uploadError, setUploadError] = useState("");
+  const [sparkActive, setSparkActive] = useState(false);
   const textareaRef = useRef(null);
+  const mainInputRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const handleCardClick = (cardId) => {
     if (cardId === "paste") {
       setPasteMode(true);
+      setSparkActive(false);
       setTimeout(() => textareaRef.current?.focus(), 100);
     } else if (cardId === "explore") {
       onStart({ mode: "explore", description: "", text: "" });
     } else if (cardId === "scratch") {
-      // Focus the main input
-      document.querySelector("[data-welcome-input]")?.focus();
+      setSparkActive(true);
+      setPasteMode(false);
+      setTimeout(() => mainInputRef.current?.focus(), 50);
     }
   };
 
@@ -51,6 +59,45 @@ export function WelcomeScreen({ onStart }) {
       onStart({ mode: "scratch", description: input, text: "" });
     }
   };
+
+  const handleFileUpload = useCallback(async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const name = file.name.toLowerCase();
+    if (!name.endsWith(".pdf") && !name.endsWith(".docx") && !name.endsWith(".txt") && !name.endsWith(".md")) {
+      setUploadError("Please upload a .pdf, .docx, or .txt file");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError("");
+    setUploadedFileName(file.name);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/parse-file", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to parse file");
+      }
+
+      setPastedText(data.text);
+    } catch (err) {
+      setUploadError(err.message);
+      setUploadedFileName("");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }, []);
 
   return (
     <div style={{
@@ -101,6 +148,7 @@ export function WelcomeScreen({ onStart }) {
           }}>
             {CARDS.map(card => {
               const Icon = card.icon;
+              const isHighlighted = card.id === "scratch" && sparkActive;
               return (
                 <button
                   key={card.id}
@@ -109,7 +157,7 @@ export function WelcomeScreen({ onStart }) {
                     flex: 1,
                     padding: "16px 14px",
                     background: C.bgComposer,
-                    border: `1px solid ${C.border}`,
+                    border: `1px solid ${isHighlighted ? C.accent : C.border}`,
                     borderRadius: C.radius,
                     cursor: "pointer",
                     textAlign: "left",
@@ -117,6 +165,8 @@ export function WelcomeScreen({ onStart }) {
                     display: "flex",
                     flexDirection: "column",
                     gap: 6,
+                    boxShadow: isHighlighted ? C.shadow : "none",
+                    transform: isHighlighted ? "translateY(-2px)" : "none",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = C.accent;
@@ -124,9 +174,9 @@ export function WelcomeScreen({ onStart }) {
                     e.currentTarget.style.boxShadow = C.shadow;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = C.border;
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.borderColor = isHighlighted ? C.accent : C.border;
+                    e.currentTarget.style.transform = isHighlighted ? "translateY(-2px)" : "translateY(0)";
+                    e.currentTarget.style.boxShadow = isHighlighted ? C.shadow : "none";
                   }}
                 >
                   <Icon size={18} style={{ color: C.accent }} />
@@ -158,11 +208,91 @@ export function WelcomeScreen({ onStart }) {
             marginBottom: 16,
             animation: "slideUp 0.2s ease",
           }}>
+            {/* File upload button */}
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: 10,
+            }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.txt,.md"
+                onChange={handleFileUpload}
+                style={{ display: "none" }}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 14px",
+                  background: C.bgHover,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: C.radiusSm,
+                  color: C.textSec,
+                  cursor: isUploading ? "wait" : "pointer",
+                  fontFamily: C.sans,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  transition: C.transitionFast,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isUploading) {
+                    e.currentTarget.style.borderColor = C.accent;
+                    e.currentTarget.style.color = C.accent;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = C.border;
+                  e.currentTarget.style.color = C.textSec;
+                }}
+              >
+                {isUploading ? (
+                  <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+                ) : (
+                  <Upload size={14} />
+                )}
+                {isUploading ? "Extracting text..." : "Upload PDF or DOCX"}
+              </button>
+
+              {uploadedFileName && !isUploading && (
+                <span style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  fontSize: 12,
+                  fontFamily: C.sans,
+                  color: C.green || "#8BC34A",
+                }}>
+                  <File size={12} />
+                  {uploadedFileName}
+                </span>
+              )}
+            </div>
+
+            {uploadError && (
+              <div style={{
+                padding: "6px 10px",
+                marginBottom: 8,
+                borderRadius: C.radiusSm,
+                background: `${C.red || "#ef4444"}15`,
+                color: C.red || "#ef4444",
+                fontSize: 12,
+                fontFamily: C.sans,
+              }}>
+                {uploadError}
+              </div>
+            )}
+
             <textarea
               ref={textareaRef}
               value={pastedText}
               onChange={(e) => setPastedText(e.target.value)}
-              placeholder="Paste your existing writing here..."
+              placeholder="Paste your existing writing here, or upload a file above..."
               style={{
                 width: "100%",
                 minHeight: 160,
@@ -181,7 +311,7 @@ export function WelcomeScreen({ onStart }) {
               onBlur={(e) => e.target.style.borderColor = C.border}
             />
             <button
-              onClick={() => setPasteMode(false)}
+              onClick={() => { setPasteMode(false); setUploadedFileName(""); setUploadError(""); }}
               style={{
                 marginTop: 8,
                 padding: "4px 12px",
@@ -193,7 +323,7 @@ export function WelcomeScreen({ onStart }) {
                 fontSize: 12,
               }}
             >
-              Back to options
+              ← Back to options
             </button>
           </div>
         )}
@@ -202,12 +332,13 @@ export function WelcomeScreen({ onStart }) {
         <div style={{
           position: "relative",
           background: C.bgComposer,
-          border: `1px solid ${C.border}`,
+          border: `1px solid ${sparkActive && !pasteMode ? C.accent : C.border}`,
           borderRadius: C.radius,
           padding: "14px 48px 14px 18px",
           transition: C.transition,
         }}>
           <textarea
+            ref={mainInputRef}
             data-welcome-input
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -217,6 +348,7 @@ export function WelcomeScreen({ onStart }) {
                 handleSubmit();
               }
             }}
+            onFocus={() => { if (!pasteMode) setSparkActive(true); }}
             placeholder={pasteMode
               ? "What would you like to improve about this writing?"
               : "What are you writing? (e.g., A cover letter for..., An essay about..., A short story that...)"
