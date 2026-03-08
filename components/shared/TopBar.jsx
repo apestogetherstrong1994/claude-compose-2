@@ -3,7 +3,7 @@
 import { C } from "@/lib/design-system";
 import { ClaudeLogo } from "@/components/icons/ClaudeLogo";
 
-export function TopBar({ projectConfig }) {
+export function TopBar({ projectConfig, onGoHome }) {
   return (
     <div style={{
       display: "flex",
@@ -20,15 +20,32 @@ export function TopBar({ projectConfig }) {
         alignItems: "center",
         gap: 10,
       }}>
-        <ClaudeLogo size={22} />
-        <span style={{
-          fontFamily: C.sans,
-          fontSize: 14,
-          fontWeight: 600,
-          color: C.text,
-        }}>
-          ClaudeCompose
-        </span>
+        <button
+          onClick={onGoHome}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+            transition: C.transitionFast,
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
+          onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+          title="Back to home"
+        >
+          <ClaudeLogo size={22} />
+          <span style={{
+            fontFamily: C.sans,
+            fontSize: 14,
+            fontWeight: 600,
+            color: C.text,
+          }}>
+            ClaudeCompose
+          </span>
+        </button>
         {projectConfig?.title && (
           <>
             <span style={{ color: C.textMuted, fontSize: 14 }}>/</span>

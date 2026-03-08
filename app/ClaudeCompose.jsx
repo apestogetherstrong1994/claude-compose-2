@@ -34,6 +34,7 @@ export default function ClaudeCompose() {
     splitParagraph,
     mergeParagraphs,
     initFromText,
+    resetDocument,
     wordCount,
     authorStats,
   } = useDocument();
@@ -101,6 +102,16 @@ export default function ClaudeCompose() {
     setPhase("writing");
   }, [startData, initFromText]);
 
+  const handleGoHome = useCallback(() => {
+    setPhase("welcome");
+    setStartData(null);
+    setProjectConfig(null);
+    resetDocument();
+    clearGhostText();
+    voiceAnalyzedRef.current = false;
+    openingTriggeredRef.current = false;
+  }, [resetDocument, clearGhostText]);
+
   // ─── Voice analysis trigger ───────────────────────────────────────
   useEffect(() => {
     if (phase !== "writing" || voiceAnalyzedRef.current) return;
@@ -113,18 +124,32 @@ export default function ClaudeCompose() {
     }
   }, [paragraphs, phase, dispatchAction]);
 
-  // ─── Opening paragraph for "Start from a Spark" ─────────────────
+  // ─── Opening paragraph suggestion ───────────────────────────────
   useEffect(() => {
-    if (phase !== "writing" || openingTriggeredRef.current) return;
-    if (startData?.mode !== "scratch" || !startData?.description) return;
+    if (phase !== "writing") return;
 
-    // Wait a tick for the first paragraph to be rendered
-    openingTriggeredRef.current = true;
+    // Only trigger when the first paragraph is empty
+    const firstPara = paragraphs[0];
+    if (!firstPara || firstPara.text) return;
+
+    // Determine the opening prompt based on entry mode
+    let openingPrompt = null;
+    if (startData?.mode === "scratch" && startData?.description) {
+      openingPrompt = startData.description;
+    } else if (startData?.mode === "explore" || !startData) {
+      openingPrompt = "Something surprising, vivid, and intriguing — a single opening sentence that makes the reader want to know what happens next. Any genre, any style. Be bold and unexpected.";
+    }
+
+    if (!openingPrompt) return;
+
+    // Wait a tick for the first paragraph to be rendered.
+    // NOTE: The ref check is inside the timer callback (not in the effect body)
+    // so that React 18 strict mode's double-mount cycle doesn't prevent execution.
+    const paraId = firstPara.id;
     const timer = setTimeout(() => {
-      const firstPara = paragraphs[0];
-      if (firstPara && !firstPara.text) {
-        fetchOpeningSuggestion(firstPara.id, startData.description);
-      }
+      if (openingTriggeredRef.current) return;
+      openingTriggeredRef.current = true;
+      fetchOpeningSuggestion(paraId, openingPrompt);
     }, 300);
 
     return () => clearTimeout(timer);
@@ -297,7 +322,7 @@ export default function ClaudeCompose() {
       flexDirection: "column",
       background: C.bg,
     }}>
-      <TopBar projectConfig={projectConfig} />
+      <TopBar projectConfig={projectConfig} onGoHome={handleGoHome} />
 
       <div style={{
         flex: 1,
