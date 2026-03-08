@@ -22,6 +22,7 @@ export default function ClaudeCompose() {
   const [isAnalyzingVoice, setIsAnalyzingVoice] = useState(false);
   const [ghostLength, setGhostLength] = useState("sentence"); // sentence | paragraph | passage
   const voiceAnalyzedRef = useRef(false);
+  const openingTriggeredRef = useRef(false);
 
   // ─── Document hook ────────────────────────────────────────────────
   const {
@@ -49,6 +50,7 @@ export default function ClaudeCompose() {
     chatMessages,
     dispatchAction,
     fetchGhostText,
+    fetchOpeningSuggestion,
     clearGhostText,
     acceptSuggestion,
     rejectSuggestion,
@@ -102,13 +104,30 @@ export default function ClaudeCompose() {
   useEffect(() => {
     if (phase !== "writing" || voiceAnalyzedRef.current) return;
 
-    const humanParagraphs = paragraphs.filter(p => p.author === "human" && p.text.length > 30);
-    if (humanParagraphs.length >= 2) {
+    const substantialParagraphs = paragraphs.filter(p => p.text.length > 30);
+    if (substantialParagraphs.length >= 2) {
       voiceAnalyzedRef.current = true;
       setIsAnalyzingVoice(true);
       dispatchAction("analyze_voice").then(() => setIsAnalyzingVoice(false));
     }
   }, [paragraphs, phase, dispatchAction]);
+
+  // ─── Opening paragraph for "Start from a Spark" ─────────────────
+  useEffect(() => {
+    if (phase !== "writing" || openingTriggeredRef.current) return;
+    if (startData?.mode !== "scratch" || !startData?.description) return;
+
+    // Wait a tick for the first paragraph to be rendered
+    openingTriggeredRef.current = true;
+    const timer = setTimeout(() => {
+      const firstPara = paragraphs[0];
+      if (firstPara && !firstPara.text) {
+        fetchOpeningSuggestion(firstPara.id, startData.description);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [phase, startData, paragraphs, fetchOpeningSuggestion]);
 
   // ─── Tool action handler ──────────────────────────────────────────
   const handleToolAction = useCallback((action, params) => {
@@ -157,12 +176,19 @@ export default function ClaudeCompose() {
     const para = paragraphs.find(p => p.id === ghostParagraphId);
     let newId = null;
     if (para) {
-      // Add ghost as new paragraph after the current one
-      newId = addParagraph(ghostParagraphId, ghostText.trim(), "claude");
+      if (!para.text) {
+        // Opening case: empty paragraph — replace it with the ghost text
+        replaceParagraph(ghostParagraphId, ghostText.trim(), "claude");
+        // Add a new empty paragraph after so the user can keep writing
+        newId = addParagraph(ghostParagraphId, "", "human");
+      } else {
+        // Normal case: add ghost as new paragraph after the current one
+        newId = addParagraph(ghostParagraphId, ghostText.trim(), "claude");
+      }
     }
     clearGhostText();
     return newId;
-  }, [ghostText, ghostParagraphId, paragraphs, addParagraph, clearGhostText]);
+  }, [ghostText, ghostParagraphId, paragraphs, addParagraph, replaceParagraph, clearGhostText]);
 
   // ─── Brainstorm ──────────────────────────────────────────────────
   const handleBrainstorm = useCallback((prompt) => {

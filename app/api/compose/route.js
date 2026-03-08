@@ -16,6 +16,7 @@ const TOKEN_LIMITS = {
   continue: 512,
   continue_paragraph: 1024,
   continue_passage: 2048,
+  opening: 1024,
   brainstorm: 2048,
   analyze_voice: 1024,
   chat: 4096,
@@ -64,8 +65,8 @@ export async function POST(request) {
     }
     const maxTokens = TOKEN_LIMITS[tokenKey] || 4096;
 
-    // Use Haiku for continue (ghost text) — much faster for real-time autocomplete
-    const model = toolType === "continue"
+    // Use Haiku for continue/opening (ghost text) — much faster for real-time autocomplete
+    const model = (toolType === "continue" || toolType === "opening")
       ? "claude-haiku-4-5-20251001"
       : "claude-sonnet-4-5-20250929";
 
@@ -151,6 +152,8 @@ function buildActionMessage(toolType, toolParams) {
       if (gl === "paragraph") return `Please continue writing the next full paragraph naturally.`;
       return `Please continue writing the next 1-3 sentences naturally.`;
     }
+    case "opening":
+      return `Please write an opening paragraph for this piece: "${toolParams?.description}"`;
     case "brainstorm":
       return toolParams?.prompt || "Help me brainstorm ideas.";
     case "analyze_voice":

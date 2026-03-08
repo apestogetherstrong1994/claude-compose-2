@@ -21,7 +21,7 @@ const CARDS = [
   {
     id: "explore",
     icon: Compass,
-    title: "Just explore",
+    title: "Just start typing",
     desc: "Jump into a blank canvas and see where it goes",
   },
 ];

@@ -132,7 +132,6 @@ export function DocumentOutline({ outline, storyElements, isAnalyzing }) {
     <div style={{
       padding: "8px 0",
       borderBottom: `1px solid ${C.border}`,
-      flexShrink: 0,
     }}>
       {/* Outline */}
       {(hasOutline || isAnalyzing) && (

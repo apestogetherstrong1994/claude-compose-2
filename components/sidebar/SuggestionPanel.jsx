@@ -181,20 +181,28 @@ export function SuggestionPanel({
             </div>
           </div>
 
-          {/* Scrollable area: outline + tab content */}
+          {/* Document outline — max half height, scrollable within */}
+          {(outline?.length > 0 || (storyElements && (storyElements.characters?.length > 0 || storyElements.settings?.length > 0 || storyElements.themes?.length > 0)) || isAnalyzingDocument) && (
+            <div style={{
+              maxHeight: "45%",
+              overflowY: "auto",
+              minHeight: 0,
+              flexShrink: 0,
+            }}>
+              <DocumentOutline
+                outline={outline}
+                storyElements={storyElements}
+                isAnalyzing={isAnalyzingDocument}
+              />
+            </div>
+          )}
+
+          {/* Tab content — fills remaining space, scrollable */}
           <div style={{
             flex: 1,
             overflowY: "auto",
             minHeight: 0,
           }}>
-            {/* Document outline & story elements */}
-            <DocumentOutline
-              outline={outline}
-              storyElements={storyElements}
-              isAnalyzing={isAnalyzingDocument}
-            />
-
-            {/* Tab content */}
             <div style={{
               padding: "12px 0",
             }}>
