@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { C } from "@/lib/design-system";
 import { Sparkles, Lightbulb, Fingerprint, ChevronLeft, ChevronRight } from "lucide-react";
 import { SuggestionCard } from "./SuggestionCard";
@@ -43,6 +43,15 @@ export function SuggestionPanel({
   writingType,
 }) {
   const [activeTab, setActiveTab] = useState("suggestions");
+  const prevSuggestionsLenRef = useRef(suggestions.length);
+
+  // Auto-switch to Suggestions tab when a new suggestion arrives
+  useEffect(() => {
+    if (suggestions.length > prevSuggestionsLenRef.current) {
+      setActiveTab("suggestions");
+    }
+    prevSuggestionsLenRef.current = suggestions.length;
+  }, [suggestions.length]);
 
   return (
     <div style={{

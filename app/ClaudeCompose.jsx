@@ -49,6 +49,7 @@ export default function ClaudeCompose() {
     voiceProfile,
     chatMessages,
     dispatchAction,
+    addSuggestion,
     fetchGhostText,
     fetchOpeningSuggestion,
     clearGhostText,
@@ -263,9 +264,14 @@ export default function ClaudeCompose() {
   }, [dispatchAction, setBrainstormIdeas]);
 
   const handleInsertIdea = useCallback((idea) => {
-    const lastPara = paragraphs[paragraphs.length - 1];
-    addParagraph(lastPara?.id, idea, "collaborative");
-  }, [paragraphs, addParagraph]);
+    addSuggestion({
+      type: "brainstorm",
+      text: idea,
+      target: "_new",
+      originalText: "",
+      reasoning: "From brainstorm",
+    });
+  }, [addSuggestion]);
 
   // ─── Render phases ────────────────────────────────────────────────
   if (phase === "welcome") {

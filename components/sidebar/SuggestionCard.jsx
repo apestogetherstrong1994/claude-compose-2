@@ -11,6 +11,7 @@ const typeBadgeColor = {
   tone: C.purple,
   describe: C.yellow,
   revision: C.accent,
+  brainstorm: C.yellow,
 };
 
 export function SuggestionCard({ suggestion, onAccept, onReject, onEdit, isStreaming }) {
