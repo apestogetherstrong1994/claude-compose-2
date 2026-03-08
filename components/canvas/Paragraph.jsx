@@ -28,6 +28,7 @@ export function Paragraph({
   const ref = useRef(null);
   const lastTextRef = useRef(paragraph.text);
   const mountedRef = useRef(false);
+  const ghostSpanRef = useRef(null);
 
   // Set initial text on mount (once only — never let React manage contentEditable children)
   useEffect(() => {
@@ -46,7 +47,7 @@ export function Paragraph({
     if (ref.current && paragraph.text !== lastTextRef.current) {
       // Strip any ghost span before comparing/updating
       const ghost = ref.current.querySelector("[data-ghost]");
-      if (ghost) ghost.remove();
+      if (ghost) { ghost.remove(); ghostSpanRef.current = null; }
       const currentText = ref.current.innerText;
       if (currentText !== paragraph.text) {
         ref.current.innerText = paragraph.text;
@@ -56,23 +57,16 @@ export function Paragraph({
   }, [paragraph.text]);
 
   // Inject ghost text inline inside the contentEditable (after paragraph text sync effect)
+  // Reuses the same DOM span across streaming chunks to avoid flicker.
   useEffect(() => {
     if (!ref.current) return;
 
-    // Always clean up existing ghost span
-    const existingGhost = ref.current.querySelector("[data-ghost]");
-    if (existingGhost) existingGhost.remove();
-
-    // Add ghost text inline if available
     if (ghostText && isActive) {
-      const ghostSpan = document.createElement("span");
-      ghostSpan.setAttribute("data-ghost", "true");
-      ghostSpan.contentEditable = "false";
-      ghostSpan.style.cssText = `color:${C.textMuted};opacity:0.4;pointer-events:none;animation:ghostFade 0.3s ease;`;
-
       // Strip any repeated paragraph text the model may have echoed back
       const paraText = paragraph.text || "";
       let displayGhost = ghostText;
+      // Strip markdown headers (e.g. "# Opening Paragraph\n\n")
+      displayGhost = displayGhost.replace(/^#[^\n]*\n+/, "");
       if (paraText.length > 0) {
         const trimmedPara = paraText.trimEnd();
         const trimmedGhost = displayGhost.trimStart();
@@ -81,17 +75,42 @@ export function Paragraph({
         }
       }
 
-      // Add a space separator if the paragraph doesn't end with whitespace
       const needsSpace = paraText.length > 0 && !paraText.endsWith(" ") && !paraText.endsWith("\n")
         && displayGhost.length > 0 && !displayGhost.startsWith(" ");
-      ghostSpan.textContent = (needsSpace ? " " : "") + displayGhost;
+      const finalText = (needsSpace ? " " : "") + displayGhost;
 
-      const badge = document.createElement("span");
-      badge.style.cssText = `display:inline-block;margin-left:8px;padding:1px 6px;background:${C.bgHover};border-radius:4px;font-size:11px;font-family:${C.sans};color:${C.textMuted};vertical-align:middle;`;
-      badge.textContent = "Tab";
-      ghostSpan.appendChild(badge);
+      // Reuse existing ghost span if it's still in the DOM, otherwise create one
+      let ghostSpan = ghostSpanRef.current;
+      if (!ghostSpan || !ref.current.contains(ghostSpan)) {
+        // Create fresh ghost span
+        ghostSpan = document.createElement("span");
+        ghostSpan.setAttribute("data-ghost", "true");
+        ghostSpan.contentEditable = "false";
+        ghostSpan.style.cssText = `color:${C.textMuted};opacity:0.4;pointer-events:none;animation:ghostFade 0.3s ease;`;
+        ghostSpanRef.current = ghostSpan;
+        ref.current.appendChild(ghostSpan);
+      }
 
-      ref.current.appendChild(ghostSpan);
+      // Update text content — find or create the text node (first child before badge)
+      const badge = ghostSpan.querySelector("[data-ghost-badge]");
+      if (!badge) {
+        // First render: set text + create badge
+        ghostSpan.textContent = finalText;
+        const badgeEl = document.createElement("span");
+        badgeEl.setAttribute("data-ghost-badge", "true");
+        badgeEl.style.cssText = `display:inline-block;margin-left:8px;padding:1px 6px;background:${C.bgHover};border-radius:4px;font-size:11px;font-family:${C.sans};color:${C.textMuted};vertical-align:middle;`;
+        badgeEl.textContent = "Tab";
+        ghostSpan.appendChild(badgeEl);
+      } else {
+        // Subsequent renders: update only the text node, keep badge
+        ghostSpan.firstChild.textContent = finalText;
+      }
+    } else {
+      // No ghost text — clean up
+      if (ghostSpanRef.current && ref.current.contains(ghostSpanRef.current)) {
+        ghostSpanRef.current.remove();
+      }
+      ghostSpanRef.current = null;
     }
   }, [ghostText, isActive, paragraph.text]);
 
@@ -99,7 +118,7 @@ export function Paragraph({
     if (ref.current) {
       // Strip ghost span before reading text content
       const ghost = ref.current.querySelector("[data-ghost]");
-      if (ghost) ghost.remove();
+      if (ghost) { ghost.remove(); ghostSpanRef.current = null; }
       const text = ref.current.innerText;
       lastTextRef.current = text;
       onTextChange?.(text);

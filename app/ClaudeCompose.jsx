@@ -191,12 +191,14 @@ export default function ClaudeCompose() {
     if (para) {
       if (!para.text) {
         // Opening case: empty paragraph — replace it with the ghost text
-        replaceParagraph(ghostParagraphId, ghostText.trim(), "claude");
+        // Strip any markdown headers the model may have prepended
+        const openingText = ghostText.trim().replace(/^#[^\n]*\n+/, "");
+        replaceParagraph(ghostParagraphId, openingText, "claude");
         // Add a new empty paragraph after so the user can keep writing
         focusId = addParagraph(ghostParagraphId, "", "human");
       } else {
         // Normal case: append ghost text to the current paragraph
-        let cleanGhost = ghostText.trim();
+        let cleanGhost = ghostText.trim().replace(/^#[^\n]*\n+/, "");
         // Strip any repeated paragraph text the model may have echoed back
         const trimmedPara = para.text.trimEnd();
         if (cleanGhost.startsWith(trimmedPara)) {
