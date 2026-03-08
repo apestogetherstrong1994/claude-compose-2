@@ -7,6 +7,7 @@ import { SuggestionCard } from "./SuggestionCard";
 import { BrainstormPanel } from "./BrainstormPanel";
 import { VoicePanel } from "./VoicePanel";
 import { parseStreamingSuggestion } from "@/lib/parsers";
+import { DocumentOutline } from "./DocumentOutline";
 
 const TABS = [
   { id: "suggestions", label: "Suggestions", icon: Sparkles },
@@ -36,6 +37,9 @@ export function SuggestionPanel({
   onToggle,
   ghostLength = "sentence",
   onGhostLengthChange,
+  outline,
+  storyElements,
+  isAnalyzingDocument,
 }) {
   const [activeTab, setActiveTab] = useState("suggestions");
 
@@ -176,6 +180,13 @@ export function SuggestionPanel({
               ))}
             </div>
           </div>
+
+          {/* Document outline & story elements */}
+          <DocumentOutline
+            outline={outline}
+            storyElements={storyElements}
+            isAnalyzing={isAnalyzingDocument}
+          />
 
           {/* Tab content */}
           <div style={{

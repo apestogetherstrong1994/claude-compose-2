@@ -64,8 +64,13 @@ export async function POST(request) {
     }
     const maxTokens = TOKEN_LIMITS[tokenKey] || 4096;
 
+    // Use Haiku for continue (ghost text) — much faster for real-time autocomplete
+    const model = toolType === "continue"
+      ? "claude-haiku-4-5-20251001"
+      : "claude-sonnet-4-5-20250929";
+
     const stream = await client.messages.stream({
-      model: "claude-sonnet-4-5-20250929",
+      model,
       max_tokens: maxTokens,
       system: systemPrompt,
       messages: formattedMessages,

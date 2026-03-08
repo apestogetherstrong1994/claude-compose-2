@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { C } from "@/lib/design-system";
 import { useDocument } from "@/lib/use-document";
 import { useAIAction } from "@/lib/use-ai-action";
+import { useDocumentAnalysis } from "@/lib/use-document-analysis";
 import { WelcomeScreen } from "@/components/onboarding/WelcomeScreen";
 import { ContextSetup } from "@/components/onboarding/ContextSetup";
 import { TopBar } from "@/components/shared/TopBar";
@@ -54,6 +55,16 @@ export default function ClaudeCompose() {
     sendChatMessage,
     setBrainstormIdeas,
   } = useAIAction({ paragraphs, voiceProfile: null, projectConfig, ghostLength });
+
+  // ─── Document analysis (outline + story elements) ─────────────────
+  const {
+    outline,
+    storyElements,
+    isAnalyzing: isAnalyzingDocument,
+  } = useDocumentAnalysis({
+    paragraphs,
+    writingType: projectConfig?.writingType,
+  });
 
   // ─── Phase transitions ────────────────────────────────────────────
   const handleWelcomeStart = useCallback((data) => {
@@ -231,6 +242,9 @@ export default function ClaudeCompose() {
           onToggle={() => setSidebarOpen(prev => !prev)}
           ghostLength={ghostLength}
           onGhostLengthChange={setGhostLength}
+          outline={outline}
+          storyElements={storyElements}
+          isAnalyzingDocument={isAnalyzingDocument}
         />
       </div>
 

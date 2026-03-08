@@ -18,7 +18,7 @@ export async function POST(request) {
     const sample = text.slice(0, 2000);
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 256,
       system: `You analyze writing samples and return structured metadata. Output ONLY valid JSON, no other text.`,
       messages: [
