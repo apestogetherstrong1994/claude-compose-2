@@ -52,12 +52,12 @@ export function BrainstormPanel({ ideas, isStreaming, onBrainstorm, onInsertIdea
               transition: C.transitionFast,
             }}
             onMouseEnter={(e) => {
-              e.target.style.borderColor = C.accent;
-              e.target.style.color = C.accent;
+              e.currentTarget.style.borderColor = C.accent;
+              e.currentTarget.style.color = C.accent;
             }}
             onMouseLeave={(e) => {
-              e.target.style.borderColor = C.border;
-              e.target.style.color = C.textMuted;
+              e.currentTarget.style.borderColor = C.border;
+              e.currentTarget.style.color = C.textMuted;
             }}
           >
             {qp}

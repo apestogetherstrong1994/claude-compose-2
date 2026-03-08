@@ -180,12 +180,12 @@ function ActionBtn({ icon: Icon, label, color, onClick }) {
         transition: C.transitionFast,
       }}
       onMouseEnter={(e) => {
-        e.target.style.background = C.bgHover;
-        e.target.style.borderColor = C.borderHover;
+        e.currentTarget.style.background = C.bgHover;
+        e.currentTarget.style.borderColor = C.borderHover;
       }}
       onMouseLeave={(e) => {
-        e.target.style.background = "transparent";
-        e.target.style.borderColor = C.border;
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.borderColor = C.border;
       }}
     >
       <Icon size={12} />

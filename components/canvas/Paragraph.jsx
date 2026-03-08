@@ -134,28 +134,23 @@ export function Paragraph({
 
       {/* Author indicator on hover */}
       {paragraph.author !== "human" && paragraph.text && (
-        <div style={{
-          position: "absolute",
-          top: 4,
-          right: 0,
-          fontSize: 10,
-          fontFamily: C.sans,
-          color: borderColor,
-          opacity: 0,
-          transition: "opacity 0.15s ease",
-          pointerEvents: "none",
-        }}
-        className="author-label"
+        <div
+          data-author-label
+          style={{
+            position: "absolute",
+            top: 4,
+            right: 0,
+            fontSize: 10,
+            fontFamily: C.sans,
+            color: borderColor,
+            opacity: 0,
+            transition: "opacity 0.15s ease",
+            pointerEvents: "none",
+          }}
         >
           {authorLabel[paragraph.author]}
         </div>
       )}
-
-      <style jsx>{`
-        div:hover .author-label {
-          opacity: 0.7 !important;
-        }
-      `}</style>
     </div>
   );
 }

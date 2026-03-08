@@ -57,8 +57,8 @@ export function SuggestionPanel({
           color: C.textMuted,
           transition: C.transitionFast,
         }}
-        onMouseEnter={(e) => e.target.style.color = C.text}
-        onMouseLeave={(e) => e.target.style.color = C.textMuted}
+        onMouseEnter={(e) => e.currentTarget.style.color = C.text}
+        onMouseLeave={(e) => e.currentTarget.style.color = C.textMuted}
       >
         {isOpen ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
       </button>

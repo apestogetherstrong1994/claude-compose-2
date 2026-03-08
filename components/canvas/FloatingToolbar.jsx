@@ -86,10 +86,10 @@ export function FloatingToolbar({ position, visible, onAction }) {
                 whiteSpace: "nowrap",
               }}
               onMouseEnter={(e) => {
-                if (!isActive) e.target.style.background = C.bgHover;
+                if (!isActive) e.currentTarget.style.background = C.bgHover;
               }}
               onMouseLeave={(e) => {
-                if (!isActive) e.target.style.background = "transparent";
+                if (!isActive) e.currentTarget.style.background = "transparent";
               }}
             >
               <Icon size={14} />
@@ -130,12 +130,12 @@ export function FloatingToolbar({ position, visible, onAction }) {
                 transition: C.transitionFast,
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = C.accentSoft;
-                e.target.style.color = C.accent;
+                e.currentTarget.style.background = C.accentSoft;
+                e.currentTarget.style.color = C.accent;
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = C.bgHover;
-                e.target.style.color = C.textSec;
+                e.currentTarget.style.background = C.bgHover;
+                e.currentTarget.style.color = C.textSec;
               }}
             >
               {tone}
