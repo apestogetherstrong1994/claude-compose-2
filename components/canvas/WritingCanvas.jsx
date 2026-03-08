@@ -207,14 +207,17 @@ export function WritingCanvas({
             onFocus={() => handleFocus(para.id)}
             onBlur={handleBlur}
             onAcceptGhost={() => {
-              const newId = onAcceptGhost?.();
-              if (newId) {
-                // Focus the newly created paragraph and place cursor at end
+              const focusId = onAcceptGhost?.();
+              if (focusId) {
+                // Focus the target paragraph and place cursor at end of text
                 requestAnimationFrame(() => {
-                  const newEl = canvasRef.current?.querySelector(`[data-paragraph-id="${newId}"]`);
-                  if (newEl) {
-                    newEl.focus();
-                    placeCaretAtEnd(newEl);
+                  const el = canvasRef.current?.querySelector(`[data-paragraph-id="${focusId}"]`);
+                  if (el) {
+                    // Strip any ghost span before placing cursor
+                    const ghost = el.querySelector("[data-ghost]");
+                    if (ghost) ghost.remove();
+                    el.focus();
+                    placeCaretAtEnd(el);
                   }
                 });
               }

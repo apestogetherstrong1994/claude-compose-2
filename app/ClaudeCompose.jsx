@@ -141,8 +141,14 @@ export default function ClaudeCompose() {
     const para = paragraphs.find(p => p.id === targetId);
 
     if (para) {
-      // Replace the paragraph text
-      replaceParagraph(targetId, suggestion.text, "claude");
+      if (suggestion.originalText && para.text.includes(suggestion.originalText)) {
+        // Selection-based: splice the suggestion into the paragraph, replacing only the selected portion
+        const newText = para.text.replace(suggestion.originalText, suggestion.text);
+        replaceParagraph(targetId, newText, "collaborative");
+      } else {
+        // Full-paragraph replacement (e.g., from chat suggestions)
+        replaceParagraph(targetId, suggestion.text, "claude");
+      }
     } else {
       // Add as new paragraph at end
       addParagraph(null, suggestion.text, "claude");
@@ -155,7 +161,13 @@ export default function ClaudeCompose() {
     const para = paragraphs.find(p => p.id === targetId);
 
     if (para) {
-      replaceParagraph(targetId, editedText, "collaborative");
+      if (suggestion.originalText && para.text.includes(suggestion.originalText)) {
+        // Selection-based: splice the edited text into the paragraph, replacing only the selected portion
+        const newText = para.text.replace(suggestion.originalText, editedText);
+        replaceParagraph(targetId, newText, "collaborative");
+      } else {
+        replaceParagraph(targetId, editedText, "collaborative");
+      }
     } else {
       addParagraph(null, editedText, "collaborative");
     }
@@ -174,21 +186,48 @@ export default function ClaudeCompose() {
   const handleAcceptGhost = useCallback(() => {
     if (!ghostText || !ghostParagraphId) return null;
     const para = paragraphs.find(p => p.id === ghostParagraphId);
-    let newId = null;
+    let focusId = ghostParagraphId;
+
     if (para) {
       if (!para.text) {
         // Opening case: empty paragraph — replace it with the ghost text
         replaceParagraph(ghostParagraphId, ghostText.trim(), "claude");
         // Add a new empty paragraph after so the user can keep writing
-        newId = addParagraph(ghostParagraphId, "", "human");
+        focusId = addParagraph(ghostParagraphId, "", "human");
       } else {
-        // Normal case: add ghost as new paragraph after the current one
-        newId = addParagraph(ghostParagraphId, ghostText.trim(), "claude");
+        // Normal case: append ghost text to the current paragraph
+        let cleanGhost = ghostText.trim();
+        // Strip any repeated paragraph text the model may have echoed back
+        const trimmedPara = para.text.trimEnd();
+        if (cleanGhost.startsWith(trimmedPara)) {
+          cleanGhost = cleanGhost.slice(trimmedPara.length).trimStart();
+        }
+        const parts = cleanGhost.split(/\n\n+/);
+
+        // Append first part to current paragraph
+        const needsSpace = para.text.length > 0 && !para.text.endsWith(" ")
+          && parts[0].length > 0 && !parts[0].startsWith(" ");
+        const appendedText = para.text + (needsSpace ? " " : "") + parts[0];
+        replaceParagraph(ghostParagraphId, appendedText, "collaborative");
+
+        // If passage-length ghost with multiple paragraphs, add the rest as new paragraphs
+        let lastId = ghostParagraphId;
+        for (let i = 1; i < parts.length; i++) {
+          lastId = addParagraph(lastId, parts[i].trim(), "claude");
+        }
+        focusId = lastId;
       }
     }
     clearGhostText();
-    return newId;
-  }, [ghostText, ghostParagraphId, paragraphs, addParagraph, replaceParagraph, clearGhostText]);
+
+    // Trigger next ghost text after a short delay (enables tab-tab-tab composing)
+    const targetId = focusId;
+    setTimeout(() => {
+      fetchGhostText(targetId);
+    }, 100);
+
+    return focusId;
+  }, [ghostText, ghostParagraphId, paragraphs, addParagraph, replaceParagraph, clearGhostText, fetchGhostText]);
 
   // ─── Brainstorm ──────────────────────────────────────────────────
   const handleBrainstorm = useCallback((prompt) => {

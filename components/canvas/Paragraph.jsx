@@ -44,6 +44,9 @@ export function Paragraph({
   useEffect(() => {
     if (!mountedRef.current) return;
     if (ref.current && paragraph.text !== lastTextRef.current) {
+      // Strip any ghost span before comparing/updating
+      const ghost = ref.current.querySelector("[data-ghost]");
+      if (ghost) ghost.remove();
       const currentText = ref.current.innerText;
       if (currentText !== paragraph.text) {
         ref.current.innerText = paragraph.text;
@@ -52,8 +55,51 @@ export function Paragraph({
     }
   }, [paragraph.text]);
 
+  // Inject ghost text inline inside the contentEditable (after paragraph text sync effect)
+  useEffect(() => {
+    if (!ref.current) return;
+
+    // Always clean up existing ghost span
+    const existingGhost = ref.current.querySelector("[data-ghost]");
+    if (existingGhost) existingGhost.remove();
+
+    // Add ghost text inline if available
+    if (ghostText && isActive) {
+      const ghostSpan = document.createElement("span");
+      ghostSpan.setAttribute("data-ghost", "true");
+      ghostSpan.contentEditable = "false";
+      ghostSpan.style.cssText = `color:${C.textMuted};opacity:0.4;pointer-events:none;animation:ghostFade 0.3s ease;`;
+
+      // Strip any repeated paragraph text the model may have echoed back
+      const paraText = paragraph.text || "";
+      let displayGhost = ghostText;
+      if (paraText.length > 0) {
+        const trimmedPara = paraText.trimEnd();
+        const trimmedGhost = displayGhost.trimStart();
+        if (trimmedGhost.startsWith(trimmedPara)) {
+          displayGhost = trimmedGhost.slice(trimmedPara.length);
+        }
+      }
+
+      // Add a space separator if the paragraph doesn't end with whitespace
+      const needsSpace = paraText.length > 0 && !paraText.endsWith(" ") && !paraText.endsWith("\n")
+        && displayGhost.length > 0 && !displayGhost.startsWith(" ");
+      ghostSpan.textContent = (needsSpace ? " " : "") + displayGhost;
+
+      const badge = document.createElement("span");
+      badge.style.cssText = `display:inline-block;margin-left:8px;padding:1px 6px;background:${C.bgHover};border-radius:4px;font-size:11px;font-family:${C.sans};color:${C.textMuted};vertical-align:middle;`;
+      badge.textContent = "Tab";
+      ghostSpan.appendChild(badge);
+
+      ref.current.appendChild(ghostSpan);
+    }
+  }, [ghostText, isActive, paragraph.text]);
+
   const handleInput = useCallback(() => {
     if (ref.current) {
+      // Strip ghost span before reading text content
+      const ghost = ref.current.querySelector("[data-ghost]");
+      if (ghost) ghost.remove();
       const text = ref.current.innerText;
       lastTextRef.current = text;
       onTextChange?.(text);
@@ -109,38 +155,6 @@ export function Paragraph({
           position: "relative",
         }}
       />
-
-      {/* Ghost text (tab-to-continue) */}
-      {ghostText && isActive && (
-        <span
-          style={{
-            color: C.textMuted,
-            opacity: 0.4,
-            fontFamily: C.serif,
-            fontSize: 17,
-            lineHeight: 1.85,
-            pointerEvents: "none",
-            paddingLeft: 16,
-            display: "block",
-            animation: "ghostFade 0.3s ease",
-          }}
-        >
-          {ghostText}
-          <span style={{
-            display: "inline-block",
-            marginLeft: 8,
-            padding: "1px 6px",
-            background: C.bgHover,
-            borderRadius: 4,
-            fontSize: 11,
-            fontFamily: C.sans,
-            color: C.textMuted,
-            verticalAlign: "middle",
-          }}>
-            Tab
-          </span>
-        </span>
-      )}
 
       {/* Author indicator on hover */}
       {paragraph.author !== "human" && paragraph.text && (
