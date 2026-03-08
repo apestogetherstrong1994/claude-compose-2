@@ -183,7 +183,7 @@ export function SuggestionPanel({
           </div>
 
           {/* Document outline — max half height, scrollable within */}
-          {(outline?.length > 0 || (storyElements && (storyElements.characters?.length > 0 || storyElements.settings?.length > 0 || storyElements.themes?.length > 0)) || isAnalyzingDocument) && (
+          {(outline?.length > 0 || (storyElements && Object.values(storyElements).some(v => Array.isArray(v) && v.length > 0)) || isAnalyzingDocument) && (
             <div style={{
               maxHeight: "45%",
               overflowY: "auto",

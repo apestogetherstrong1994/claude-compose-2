@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { C } from "@/lib/design-system";
-import { List, Users, MapPin, Palette, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import {
+  List, Users, MapPin, Palette, ChevronDown, ChevronRight, Loader2,
+  Briefcase, Star, Scale, BookOpen, Target, ListChecks,
+} from "lucide-react";
 
 const TYPE_COLORS = {
   intro: "#6B9BD2",
@@ -118,12 +121,55 @@ function ElementTag({ name, description }) {
   );
 }
 
+function StringTag({ text }) {
+  return (
+    <div style={{
+      display: "inline-flex",
+      padding: "2px 8px",
+      marginRight: 4,
+      marginBottom: 4,
+      background: C.bgHover,
+      borderRadius: 10,
+      fontSize: 11,
+      fontFamily: C.sans,
+      color: C.text,
+      fontWeight: 500,
+    }}>
+      {text}
+    </div>
+  );
+}
+
+function TagList({ children }) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", padding: "2px 0 4px 0" }}>
+      {children}
+    </div>
+  );
+}
+
+// Element section configs — maps element keys to display properties
+const ELEMENT_SECTIONS = [
+  // Fiction / Poetry
+  { key: "characters", title: "Characters", icon: Users, type: "nameDesc" },
+  { key: "settings", title: "Settings", icon: MapPin, type: "nameDesc" },
+  // Essay / Non-fiction / Blog
+  { key: "arguments", title: "Arguments", icon: Scale, type: "nameDesc" },
+  { key: "evidence", title: "Evidence", icon: BookOpen, type: "nameDesc" },
+  // Cover Letter
+  { key: "experience", title: "Experience", icon: Briefcase, type: "nameDesc" },
+  { key: "skills", title: "Skills", icon: Star, type: "string" },
+  // Email
+  { key: "keyPoints", title: "Key Points", icon: Target, type: "nameDesc" },
+  { key: "actionItems", title: "Action Items", icon: ListChecks, type: "string" },
+  // Universal
+  { key: "themes", title: "Themes", icon: Palette, type: "string" },
+];
+
 export function DocumentOutline({ outline, storyElements, isAnalyzing }) {
   const hasOutline = outline && outline.length > 0;
-  const hasElements = storyElements && (
-    storyElements.characters?.length > 0 ||
-    storyElements.settings?.length > 0 ||
-    storyElements.themes?.length > 0
+  const hasElements = storyElements && Object.values(storyElements).some(
+    v => Array.isArray(v) && v.length > 0
   );
 
   if (!hasOutline && !hasElements && !isAnalyzing) return null;
@@ -161,53 +207,34 @@ export function DocumentOutline({ outline, storyElements, isAnalyzing }) {
         </CollapsibleSection>
       )}
 
-      {/* Story Elements */}
+      {/* Dynamic element sections */}
       {hasElements && (
         <>
-          {storyElements.characters?.length > 0 && (
-            <CollapsibleSection
-              title="Characters"
-              icon={Users}
-              count={storyElements.characters.length}
-              defaultOpen={true}
-            >
-              <div style={{ display: "flex", flexWrap: "wrap", padding: "2px 0 4px 0" }}>
-                {storyElements.characters.map((c, i) => (
-                  <ElementTag key={i} name={c.name} description={c.description} />
-                ))}
-              </div>
-            </CollapsibleSection>
-          )}
+          {ELEMENT_SECTIONS.map(section => {
+            const items = storyElements[section.key];
+            if (!items || items.length === 0) return null;
 
-          {storyElements.settings?.length > 0 && (
-            <CollapsibleSection
-              title="Settings"
-              icon={MapPin}
-              count={storyElements.settings.length}
-              defaultOpen={true}
-            >
-              <div style={{ display: "flex", flexWrap: "wrap", padding: "2px 0 4px 0" }}>
-                {storyElements.settings.map((s, i) => (
-                  <ElementTag key={i} name={s.name} description={s.description} />
-                ))}
-              </div>
-            </CollapsibleSection>
-          )}
-
-          {storyElements.themes?.length > 0 && (
-            <CollapsibleSection
-              title="Themes"
-              icon={Palette}
-              count={storyElements.themes.length}
-              defaultOpen={true}
-            >
-              <div style={{ display: "flex", flexWrap: "wrap", padding: "2px 0 4px 0" }}>
-                {storyElements.themes.map((t, i) => (
-                  <ElementTag key={i} name={t} />
-                ))}
-              </div>
-            </CollapsibleSection>
-          )}
+            return (
+              <CollapsibleSection
+                key={section.key}
+                title={section.title}
+                icon={section.icon}
+                count={items.length}
+                defaultOpen={true}
+              >
+                <TagList>
+                  {section.type === "nameDesc"
+                    ? items.map((item, i) => (
+                        <ElementTag key={i} name={item.name} description={item.description} />
+                      ))
+                    : items.map((item, i) => (
+                        <StringTag key={i} text={item} />
+                      ))
+                  }
+                </TagList>
+              </CollapsibleSection>
+            );
+          })}
         </>
       )}
     </div>
